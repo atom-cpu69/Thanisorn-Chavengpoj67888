@@ -1,0 +1,1618 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>ภารกิจตั้งอาณานิคมใหม่ V2</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap');
+  
+  :root{
+    --void: #0a0e27; --void-deep: #050714; --star: #f4c15c; --star-dim: #d9a84a;
+    --earth: #4a9bd1; --text: #e8e6f0; --text-dim: #a8a3c4;
+    --wrong: #d4483c; --right: #5cb87a; --card: #12173a; --gold: #f4c15c; --mat: #7ad0c6;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family: 'Sarabun', 'Trebuchet MS', sans-serif;
+    background: radial-gradient(ellipse at 20% 20%, #2a2f5a 0%, #1a1f4a 30%, var(--void) 60%, var(--void-deep) 100%);
+    color: var(--text);
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+  }
+  #stars{position:fixed; inset:0; z-index:0; pointer-events:none;}
+  .stage{ 
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(244,193,92,0.1) 0%, transparent 60%);
+  }
+  .screen{ 
+    width: 100vw;
+    height: 100vh;
+    text-align: center; 
+    animation: slideIn 0.4s ease-out;
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .hidden{ display:none !important; }
+  button{ font-family: inherit; cursor: pointer; border: none; }
+
+  h1{
+    font-size: 1.7rem;
+    font-weight:700;
+    margin-bottom: 10px;
+    color: var(--star);
+    text-shadow: 0 0 24px rgba(244,193,92,0.5), 0 0 48px rgba(244,193,92,0.3);
+    letter-spacing: 1px;
+  }
+  .subtitle{ color: var(--text-dim); font-size: 0.95rem; margin-bottom: 22px; line-height: 1.6; }
+  .btn-launch{
+    background: linear-gradient(180deg, var(--star), var(--star-dim)); color: #241a00; font-size: 1.02rem; font-weight: 700;
+    padding: 13px 36px; border-radius: 30px; box-shadow: 0 8px 24px rgba(244,193,92,0.3);
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+  .btn-launch:hover:not(:disabled){
+    transform: translateY(-3px);
+    box-shadow: 0 12px 36px rgba(244,193,92,0.6);
+  }
+  .btn-launch:active{ transform: scale(0.96); }
+  .btn-launch:disabled{ opacity: 0.4; cursor: not-allowed; }
+  .btn-ghost{
+    background: transparent;
+    border: 2px solid rgba(255,255,255,0.3);
+    color: var(--text-dim);
+    padding: 10px 26px;
+    border-radius: 24px;
+    font-size: 0.88rem;
+    margin-top: 10px;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 8px rgba(255,255,255,0.1);
+  }
+  .btn-ghost:hover{
+    border-color: var(--star);
+    color: var(--star);
+    box-shadow: 0 0 16px rgba(244,193,92,0.3);
+    transform: translateY(-2px);
+  }
+  .btn-ghost:disabled{ opacity: 0.35; cursor: default; }
+
+  .rules{
+    text-align:left;
+    background: linear-gradient(135deg, rgba(122,110,180,0.1), rgba(122,110,180,0.05));
+    border:2px solid rgba(255,255,255,0.15);
+    border-radius: 14px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    line-height:1.85;
+    backdrop-filter: blur(5px);
+  }
+  .rules b{ color: var(--text); }
+
+  /* World HUD */
+  .hud-bar{
+    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;
+    background: linear-gradient(135deg, rgba(18,23,58,0.9), rgba(18,23,58,0.7));
+    border: 2px solid rgba(122,208,198,0.4);
+    border-radius: 14px;
+    padding: 10px 16px; margin-bottom: 12px; font-size: 0.85rem;
+    box-shadow: 0 0 16px rgba(122,208,198,0.2);
+    backdrop-filter: blur(5px);
+  }
+  .hud-item{ display:flex; align-items:center; gap:5px; white-space:nowrap; }
+  .hud-item b{ color: var(--star); }
+  .hearts-mini{ display:flex; gap:2px; }
+  #canvas-wrap{ position: relative; }
+  canvas{ display:block; width: 100vw; height: 100vh; margin: 0; border-radius: 0; border: none; background: #0d1230; touch-action: none; padding: 0; }
+  .zone-prompt{
+    position:absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+    background: linear-gradient(135deg, rgba(244,193,92,0.2), rgba(244,193,92,0.1));
+    border: 2px solid var(--star); color: var(--star);
+    padding: 8px 18px; border-radius: 20px; font-size: 0.85rem; font-weight:600;
+    pointer-events:none; opacity:0; transition: opacity 0.15s;
+    box-shadow: 0 0 16px rgba(244,193,92,0.4);
+  }
+  .zone-prompt.show{ opacity: 1; }
+  .move-hint{ margin-top: 10px; font-size: 0.78rem; color: var(--text-dim); }
+
+  /* mobile dpad */
+  #dpad{ display:none; margin-top: 14px; justify-content:center; gap: 8px; }
+  #dpad .pad-row{ display:flex; gap:8px; }
+  #dpad button{
+    width: 52px; height: 52px; border-radius: 12px;
+    background: linear-gradient(135deg, rgba(244,193,92,0.2), rgba(122,208,198,0.15));
+    border: 2px solid rgba(244,193,92,0.5); color: var(--text);
+    font-size: 1.3rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 0 12px rgba(244,193,92,0.3);
+  }
+  #dpad button:hover{
+    background: linear-gradient(135deg, rgba(244,193,92,0.4), rgba(122,208,198,0.3));
+    box-shadow: 0 0 20px rgba(244,193,92,0.5);
+    transform: scale(1.05);
+  }
+  #dpad button:active{
+    background: rgba(244,193,92,0.3);
+    transform: scale(0.95);
+  }
+
+  /* Panels (shop / mining / colony / level select) */
+  .panel{
+    background: linear-gradient(135deg, rgba(18,23,58,0.95), rgba(18,23,58,0.7));
+    border: 2px solid rgba(122,110,180,0.4);
+    border-radius: 18px;
+    padding: 26px 22px;
+    margin: 0;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.6), inset 0 1px 1px rgba(255,255,255,0.05);
+    text-align:left;
+    backdrop-filter: blur(10px);
+  }
+  .panel h2{ font-size: 1.25rem; color: var(--star); margin-bottom: 6px; text-align:center; }
+  .panel .panel-desc{ color: var(--text-dim); font-size: 0.85rem; text-align:center; margin-bottom: 20px; }
+  .stat-row{ display:flex; justify-content:space-between; padding: 8px 0; border-bottom: 1px dashed rgba(255,255,255,0.1); font-size: 0.92rem; }
+  .stat-row b{ color: var(--mat); }
+  .upgrade-box{ margin-top: 18px; text-align:center; }
+  .progress-track{
+    height: 14px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.08);
+    overflow:hidden;
+    margin: 10px 0 6px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+  }
+  .progress-fill{
+    height:100%;
+    background: linear-gradient(90deg, var(--earth), var(--mat));
+    transition: width 0.4s ease;
+    box-shadow: 0 0 12px rgba(122,208,198,0.5);
+  }
+  .progress-label{ text-align:center; font-size: 0.85rem; color: var(--text-dim); margin-bottom: 16px; }
+
+  .mine-btn-wrap{ text-align:center; margin: 18px 0; }
+  .mine-btn{
+    width: 130px;
+    height:130px;
+    border-radius: 50%;
+    font-size: 2.3rem;
+    background: radial-gradient(circle at 35% 30%, #e0d3ff, #7a6bc7);
+    box-shadow: 0 0 40px rgba(122,110,199,0.5), inset -2px -2px 8px rgba(0,0,0,0.3);
+    color: #1b1330;
+    transition: all 0.3s ease;
+    border: 3px solid rgba(255,255,255,0.2);
+  }
+  .mine-btn:hover:not(:disabled){
+    transform: scale(1.05);
+    box-shadow: 0 0 50px rgba(122,110,199,0.7), inset -2px -2px 8px rgba(0,0,0,0.3);
+  }
+  .mine-btn:active:not(:disabled){
+    transform: scale(0.95);
+  }
+  .mine-btn:disabled{
+    opacity: 0.4;
+    filter: grayscale(0.6);
+  }
+  .mine-feedback{ text-align:center; min-height: 24px; font-size: 0.95rem; color: var(--mat); margin-top: 8px; }
+
+  .level-card{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap: 10px;
+    background: linear-gradient(135deg, rgba(122,110,180,0.1), rgba(122,110,180,0.05));
+    border: 2px solid rgba(255,255,255,0.12);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 10px;
+    transition: all 0.3s ease;
+  }
+  .level-card:hover:not(.locked){
+    background: linear-gradient(135deg, rgba(122,110,180,0.2), rgba(122,110,180,0.1));
+    border-color: var(--star);
+    transform: translateX(4px);
+  }
+  .level-card.locked{
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .level-card .lc-info{ font-size: 0.88rem; }
+  .level-card .lc-info .lc-name{ font-weight:700; color: var(--text); }
+  .level-card .lc-info .lc-meta{ color: var(--text-dim); font-size: 0.78rem; margin-top: 2px; }
+  .lc-badge{ font-size: 0.72rem; padding: 3px 8px; border-radius: 10px; background: rgba(92,184,122,0.18); color: var(--right); }
+  .lc-start{ background: var(--star); color:#241a00; padding: 8px 16px; border-radius: 18px; font-size: 0.82rem; font-weight:700; white-space:nowrap; }
+
+  /* HUD (quiz) */
+  .hud{ display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; }
+  .hearts{ display:flex; gap:4px; font-size: 1.1rem; }
+  .hearts span { animation: heartbeat 0.8s ease-in-out infinite; }
+  @keyframes heartbeat { 0%, 100%{transform:scale(1);} 25%{transform:scale(1.1);} }
+  .heart.lost{ filter: grayscale(1) opacity(0.25); }
+  .timer{ font-weight:700; font-size: 1.02rem; color: var(--star); font-variant-numeric: tabular-nums; }
+  .timer.low{ color: var(--wrong); animation: pulse 0.6s infinite; }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+  @keyframes glow { 0%{box-shadow: 0 8px 24px rgba(244,193,92,0.3);} 50%{box-shadow: 0 12px 36px rgba(244,193,92,0.6);} 100%{box-shadow: 0 8px 24px rgba(244,193,92,0.3);} }
+  @keyframes slideIn { from{opacity:0; transform:translateY(20px);} to{opacity:1; transform:translateY(0);} }
+  @keyframes bounce { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-8px);} }
+  .timebar-track{
+    height: 6px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.08);
+    margin-bottom: 14px;
+    overflow:hidden;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.4);
+  }
+  .timebar-fill{
+    height:100%;
+    background: linear-gradient(90deg, var(--earth), var(--star));
+    transition: width 1s linear;
+    box-shadow: 0 0 8px rgba(244,193,92,0.6);
+  }
+  .track{ display:flex; gap:6px; justify-content:center; margin-bottom: 16px; flex-wrap: wrap; }
+  .dot{ width:10px; height:10px; border-radius:50%; background: rgba(255,255,255,0.15); }
+  .dot.done{ background: var(--right); }
+  .dot.wrong{ background: var(--wrong); }
+  .dot.current{ background: var(--earth); box-shadow: 0 0 8px var(--earth); }
+  .card{
+    background: linear-gradient(135deg, rgba(18,23,58,0.95), rgba(18,23,58,0.7));
+    border: 2px solid rgba(122,110,180,0.4);
+    border-radius: 18px;
+    padding: 26px 20px;
+    margin: 0;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.6), inset 0 1px 1px rgba(255,255,255,0.05);
+    backdrop-filter: blur(10px);
+  }
+  .q-label{ font-size: 0.74rem; color: #9a8fd9; margin-bottom: 10px; }
+  .q-text{ font-size: 1.14rem; line-height: 1.5; margin-bottom: 20px; }
+  .wrong-count{ font-size: 0.88rem; color: var(--wrong); margin: 8px 0; font-weight: 600; }
+  .choices{ display:flex; flex-direction:column; gap:10px; }
+  .choice{
+    background: rgba(255,255,255,0.04);
+    border: 2px solid rgba(255,255,255,0.12);
+    color: var(--text);
+    text-align:left;
+    padding: 12px 15px;
+    border-radius: 12px;
+    font-size: 0.96rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+  .choice:hover:not(:disabled){
+    border-color: var(--earth);
+    background: rgba(74,155,209,0.15);
+    transform: translateX(4px);
+    box-shadow: -4px 0 16px rgba(74,155,209,0.3);
+  }
+  .choice.correct{ background: rgba(92,184,122,0.18); border-color: var(--right); }
+  .choice.wrong{ background: rgba(212,72,60,0.18); border-color: var(--wrong); }
+  .choice:disabled{ cursor: default; opacity: 0.85; }
+  .feedback{ margin-top: 14px; min-height: 22px; font-size: 0.9rem; color: var(--text-dim); }
+  .btn-next{
+    margin-top: 16px;
+    background: transparent;
+    border: 2px solid var(--star);
+    color: var(--star);
+    padding: 9px 26px;
+    border-radius: 24px;
+    font-size: 0.9rem;
+    font-weight:600;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 12px rgba(244,193,92,0.2);
+  }
+  .btn-next:hover{
+    background: rgba(244,193,92,0.15);
+    box-shadow: 0 0 20px rgba(244,193,92,0.4);
+    transform: translateY(-2px);
+  }
+
+  .big-icon{
+    font-size: 3.2rem;
+    margin-bottom: 12px;
+    animation: bounce 0.8s ease-in-out infinite;
+  }
+  .inter-title{
+    font-size: 1.4rem;
+    font-weight:700;
+    margin-bottom: 10px;
+    color: var(--star);
+    text-shadow: 0 0 16px rgba(244,193,92,0.6);
+  }
+  .inter-desc{ color: var(--text-dim); margin-bottom: 24px; font-size: 0.92rem; line-height:1.7; }
+  .btn-row{ display:flex; gap: 10px; justify-content:center; flex-wrap:wrap; }
+
+  .victory-stats{
+    text-align:left;
+    background: linear-gradient(135deg, rgba(92,184,122,0.1), rgba(92,184,122,0.05));
+    border:2px solid rgba(92,184,122,0.4);
+    border-radius: 14px;
+    padding: 16px 20px;
+    margin: 18px 0;
+    font-size: 0.9rem;
+    line-height: 2;
+    box-shadow: 0 0 16px rgba(92,184,122,0.2);
+    backdrop-filter: blur(5px);
+  }
+  .victory-stats b{ color: var(--star); }
+
+  /* Event overlay */
+  .event-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center;
+    z-index:999; opacity:0; transition:opacity 0.3s; pointer-events:none;
+  }
+  .event-overlay.show{ opacity:1; pointer-events:auto; }
+  .event-box{
+    background: linear-gradient(135deg, rgba(18,23,58,0.98), rgba(18,23,58,0.85));
+    border:2px solid var(--star);
+    border-radius:20px;
+    padding:30px 24px;
+    text-align:center;
+    max-width:300px;
+    box-shadow: 0 0 50px rgba(244,193,92,0.5), inset 0 1px 1px rgba(255,255,255,0.1);
+    animation: slideIn 0.5s ease-out;
+    backdrop-filter: blur(10px);
+  }
+  .event-icon{
+    font-size:3rem;
+    margin-bottom:16px;
+    animation: bounce 0.6s infinite;
+  }
+  .event-title{ font-size:1.3rem; font-weight:700; color:var(--star); margin-bottom:8px; }
+  .event-desc{ color:var(--text-dim); margin-bottom:20px; font-size:0.95rem; line-height:1.6; }
+  .event-confirm{
+    background: linear-gradient(180deg, var(--star), var(--star-dim));
+    color:#241a00;
+    padding: 10px 28px;
+    border-radius: 24px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 16px rgba(244,193,92,0.4);
+  }
+  .event-confirm:hover{
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(244,193,92,0.6);
+  }
+
+  /* Ink effect (mysterious ink event) */
+  .ink-overlay{
+    position:fixed; inset:0; background:rgba(20,15,40,0.85); z-index:888; opacity:0; pointer-events:none;
+    transition:opacity 0.3s;
+  }
+  .ink-overlay.show{ opacity:1; }
+
+  /* Alien helper UI */
+  .alien-helper{
+    position:fixed; top:80px; right:20px;
+    background: linear-gradient(135deg, rgba(122,208,198,0.3), rgba(122,208,198,0.15));
+    border:3px solid var(--mat);
+    border-radius:12px; padding:8px 12px; font-size:0.85rem; color:var(--mat); z-index:100;
+    opacity:0; transition:opacity 0.3s; pointer-events:none;
+    box-shadow: 0 0 24px rgba(122,208,198,0.4);
+    animation: slideInFromRight 0.5s ease-out forwards;
+  }
+  .alien-helper.show{ opacity:1; }
+  @keyframes slideInFromRight { from{opacity:0; transform:translateX(100px);} to{opacity:1; transform:translateX(0);} }
+  @keyframes parallaxMove { 0%{transform: translateX(0);} 100%{transform: translateX(-200px);} }
+  @keyframes floatPlanet { 0%, 100%{transform: translateY(0px);} 50%{transform: translateY(20px);} }
+  @keyframes rotatePlanet { 0%{transform: rotateZ(0deg);} 100%{transform: rotateZ(360deg);} }
+  @keyframes rotateRing { 0%{transform: rotateZ(0deg) rotateX(75deg);} 100%{transform: rotateZ(360deg) rotateX(75deg);} }
+  
+  /* Space background */
+  #space-bg{
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    background: var(--void-deep);
+  }
+  .parallax-layer{
+    position: absolute;
+    inset: 0;
+    background-size: 300px 300px;
+    animation: parallaxMove 60s linear infinite;
+    opacity: 0.5;
+  }
+  
+  /* Planets container */
+  #planets-container{
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .planet{
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.7;
+  }
+  .planet.sun{
+    width: 140px;
+    height: 140px;
+    background: radial-gradient(circle at 30% 30%, #fff700, #ff9500);
+    box-shadow: 0 0 80px rgba(255,180,0,0.9);
+    opacity: 0.5;
+    animation: floatPlanet 8s ease-in-out infinite;
+  }
+  .planet.mercury{
+    width: 25px;
+    height: 25px;
+    background: radial-gradient(circle at 30% 30%, #d4a574, #8b6914);
+    animation: floatPlanet 6s ease-in-out infinite;
+  }
+  .planet.venus{
+    width: 50px;
+    height: 50px;
+    background: radial-gradient(circle at 30% 30%, #ffc649, #e8a93d);
+    box-shadow: 0 0 25px rgba(255,198,73,0.4);
+    animation: floatPlanet 7s ease-in-out infinite;
+  }
+  .planet.earth{
+    width: 65px;
+    height: 65px;
+    background: radial-gradient(circle at 30% 30%, #4a9bd1, #2d5a7b);
+    box-shadow: 0 0 30px rgba(74,155,209,0.5);
+    animation: floatPlanet 7s ease-in-out infinite;
+  }
+  .planet.mars{
+    width: 45px;
+    height: 45px;
+    background: radial-gradient(circle at 30% 30%, #e27b58, #a04429);
+    box-shadow: 0 0 20px rgba(226,123,88,0.4);
+    animation: floatPlanet 8s ease-in-out infinite;
+  }
+  .planet.jupiter{
+    width: 110px;
+    height: 110px;
+    background: radial-gradient(circle at 30% 30%, #d4a574, #9b7d54);
+    box-shadow: 0 0 40px rgba(212,165,116,0.3), inset -5px 5px 10px rgba(0,0,0,0.3);
+    animation: floatPlanet 9s ease-in-out infinite;
+  }
+  .planet.saturn{
+    width: 95px;
+    height: 95px;
+    background: radial-gradient(circle at 30% 30%, #f4d76e, #c7a844);
+    box-shadow: 0 0 30px rgba(244,215,110,0.3);
+    animation: floatPlanet 10s ease-in-out infinite;
+  }
+  .saturn-ring{
+    position: absolute;
+    inset: -25px;
+    border: 4px solid rgba(255,220,100,0.5);
+    border-radius: 50%;
+    animation: rotateRing 12s linear infinite;
+  }
+  
+  .planet.uranus{
+    width: 75px;
+    height: 75px;
+    background: radial-gradient(circle at 30% 30%, #4fd0e7, #1b9ab7);
+    box-shadow: 0 0 25px rgba(79,208,231,0.4);
+    animation: floatPlanet 8s ease-in-out infinite;
+  }
+  .planet.neptune{
+    width: 70px;
+    height: 70px;
+    background: radial-gradient(circle at 30% 30%, #4166f5, #2545b5);
+    box-shadow: 0 0 25px rgba(65,102,245,0.4);
+    animation: floatPlanet 9s ease-in-out infinite;
+  }
+  .planet.moon{
+    width: 22px;
+    height: 22px;
+    background: radial-gradient(circle at 30% 30%, #e8e6f0, #a8a3c4);
+    box-shadow: 0 0 10px rgba(232,230,240,0.3);
+  }
+
+/* ===== V2 WORLD / MOBILE FIXES ===== */
+#screen-world{position:fixed;inset:0;display:block;padding:0;overflow:hidden}
+#screen-world.hidden{display:none!important}
+#screen-world .hud-bar{
+  position:absolute;z-index:40;top:max(10px,env(safe-area-inset-top));left:50%;
+  transform:translateX(-50%);width:min(94vw,760px);margin:0;
+  display:flex!important;justify-content:space-around;flex-wrap:wrap;
+  background:rgba(10,14,39,.92);border:1px solid rgba(122,208,198,.55)
+}
+#canvas-wrap{position:absolute!important;inset:0!important;width:100%!important;height:100%!important}
+#game-canvas{position:absolute;inset:0;width:100%!important;height:100%!important;display:block;touch-action:none}
+#screen-world .move-hint{
+ position:absolute;z-index:35;left:50%;bottom:max(14px,env(safe-area-inset-bottom));
+ transform:translateX(-50%);margin:0;padding:6px 12px;border-radius:16px;
+ background:rgba(10,14,39,.75);pointer-events:none
+}
+#zone-prompt{z-index:45;bottom:145px}
+#dpad{
+ position:absolute!important;z-index:60!important;left:max(14px,env(safe-area-inset-left));
+ bottom:max(18px,env(safe-area-inset-bottom));margin:0!important;
+ display:flex!important;flex-direction:column!important;align-items:center!important;
+ user-select:none;-webkit-user-select:none;touch-action:none
+}
+#dpad button{width:58px;height:58px;touch-action:none;background:rgba(18,23,58,.94)}
+#dpad-interact{background:rgba(244,193,92,.9)!important;color:#241a00!important;font-weight:800}
+@media (pointer:fine) and (min-width:901px){#dpad{opacity:.45}}
+
+</style>
+<style>
+#dpad{display:flex!important;position:fixed!important;z-index:9999!important;left:24px!important;bottom:24px!important;margin:0!important;flex-direction:column!important;align-items:center!important;gap:8px!important;pointer-events:auto!important;opacity:1!important;visibility:visible!important}
+#dpad .pad-row{display:flex!important;gap:8px!important}
+#dpad button{display:flex!important;align-items:center!important;justify-content:center!important;width:64px!important;height:64px!important;padding:0!important;border-radius:16px!important;font-size:25px!important;background:#18204d!important;border:2px solid #f4c15c!important;color:#fff!important;touch-action:none!important;user-select:none!important}
+#dpad-interact{background:#f4c15c!important;color:#241a00!important;font-weight:800!important}
+#screen-world.hidden #dpad{display:none!important}
+</style></head>
+<body>
+
+<canvas id="stars"></canvas>
+<div id="space-bg">
+  <div class="parallax-layer" style="background-image: radial-gradient(circle at 20% 50%, rgba(244,193,92,0.05) 1px, transparent 1px); background-size: 150px 150px; animation-duration: 80s;"></div>
+  <div class="parallax-layer" style="background-image: radial-gradient(circle at 60% 30%, rgba(122,208,198,0.04) 0.5px, transparent 0.5px); background-size: 200px 200px; animation-duration: 120s; animation-direction: reverse;"></div>
+</div>
+<div id="planets-container"></div>
+<div class="ink-overlay" id="ink-overlay"></div>
+<div class="event-overlay" id="event-overlay">
+  <div class="event-box" id="event-box">
+    <div class="event-icon" id="event-icon">🌠</div>
+    <div class="event-title" id="event-title">เหตุการณ์</div>
+    <div class="event-desc" id="event-desc">รายละเอียด</div>
+    <button class="event-confirm" id="event-confirm-btn" onclick="closeEventPopup()">ตกลง</button>
+  </div>
+</div>
+
+
+<div class="stage">
+
+  <!-- TITLE -->
+  <div id="screen-title" class="screen">
+    <h1>🌌 ภารกิจตั้งอาณานิคมใหม่</h1>
+    <p class="subtitle">คุณคือผู้นำที่ต้องพาชาวโลกไปตั้งถิ่นฐานใหม่บนดาวดวงอื่น<br>ให้เร็วและปลอดภัยที่สุด</p>
+    <div class="rules">
+      <div>🕹️ ใช้ <b>ลูกศร / WASD</b> เดินไปรอบฐาน แล้วกด <b>E</b> เพื่อโต้ตอบกับสถานที่</div>
+      <div>🚀 <b>ฐานปล่อยยาน</b> — ตอบคำถามดาราศาสตร์ 5 ด่านเพื่อรับ <b>โกลด์</b> (ห้ามตอบผิดเกิน 2 ข้อ)</div>
+      <div>🏪 <b>ที่ซื้อขาย</b> — ใช้โกลด์อัปเกรดยานให้ขุดทรัพยากรได้มากขึ้น</div>
+      <div>⛏️ <b>จุดขุดทรัพยากร</b> — ขุดวัสดุอุปกรณ์ ยิ่งยานดีโอกาสได้วัสดุยิ่งเยอะ</div>
+      <div>🏗️ <b>ศูนย์บัญชาการ</b> — สะสมวัสดุให้ครบเพื่อสร้างอาณานิคมและจบเกม</div>
+      <div>👽 <b>การรุกรานต่างดาว</b> — ทุก 1 นาที มีเหตุการณ์สุ่ม (30% เสียเงิน, มิตรภาพ, หมึก, เพชร, พลังลึก)</div>
+      <div>⏱️ เกมจับเวลารวมทั้งหมด ยิ่งจบเร็วยิ่งเก่ง!</div>
+    </div>
+    <button class="btn-launch" onclick="startCampaign()">🚀 เริ่มภารกิจ</button>
+  </div>
+
+  <!-- WORLD -->
+  <div id="screen-world" class="screen hidden">
+    <div class="hud-bar">
+      <div class="hud-item">⏱️ <b id="w-time">00:00</b></div>
+      <div class="hud-item hearts-mini" id="w-hearts"></div>
+      <div class="hud-item">🪙 <b id="w-gold">0</b></div>
+      <div class="hud-item">🧱 <b id="w-materials">0</b>/<span id="w-target">400</span></div>
+      <div class="hud-item">🚀 ยานระดับ <b id="w-ship">0</b></div>
+    </div>
+    <div id="canvas-wrap">
+      <canvas id="game-canvas" width="600" height="360"></canvas>
+      <div class="zone-prompt" id="zone-prompt">กด E: ฐานปล่อยยาน</div>
+    </div>
+    <div class="move-hint">เดิน: ลูกศร หรือ W A S D · โต้ตอบ: E</div>
+    <div id="dpad">
+      <div class="pad-row"><button data-dir="up">▲</button></div>
+      <div class="pad-row">
+        <button data-dir="left">◀</button>
+        <button id="dpad-interact">E</button>
+        <button data-dir="right">▶</button>
+      </div>
+      <div class="pad-row"><button data-dir="down">▼</button></div>
+    </div>
+  </div>
+
+  <!-- LEVEL SELECT -->
+  <div id="screen-level-select" class="screen hidden">
+    <div class="panel">
+      <h2>🚀 ฐานปล่อยยาน</h2>
+      <div class="panel-desc">เลือกด่านความรู้ดาราศาสตร์ที่จะตอบ — ผ่านด่านเพื่อรับโกลด์ (ห้ามตอบผิดเกิน 2 ข้อ)</div>
+      <div id="level-cards"></div>
+    </div>
+    <button class="btn-ghost" onclick="backToWorld()">← กลับฐาน</button>
+  </div>
+
+  <!-- LEVEL INTRO -->
+  <div id="screen-level-intro" class="screen hidden">
+    <div class="panel" style="text-align:center;">
+      <h2 id="li-title">ด่านที่ 1</h2>
+      <div class="panel-desc" id="li-desc">คำอธิบายด่าน</div>
+      <div style="margin-bottom:20px; font-size:0.9rem; color:var(--text-dim);">
+        คำถาม: <b id="li-qcount" style="color:var(--star);">10 ข้อ</b> &nbsp;|&nbsp;
+        เวลา: <b id="li-time" style="color:var(--star);">5:00</b> นาที &nbsp;|&nbsp;
+        รางวัล: <b id="li-reward" style="color:var(--gold);">80 โกลด์</b>
+      </div>
+      <button class="btn-launch" onclick="startLevel()">เริ่มด่านนี้</button>
+      <div><button class="btn-ghost" onclick="showScreen('levelSelect')">← เลือกด่านอื่น</button></div>
+    </div>
+  </div>
+
+  <!-- QUIZ -->
+  <div id="screen-quiz" class="screen hidden">
+    <div class="hud">
+      <div class="hearts" id="hearts"></div>
+      <div class="timer" id="timer">5:00</div>
+    </div>
+    <div class="timebar-track"><div class="timebar-fill" id="timebar-fill"></div></div>
+    <div class="track" id="track"></div>
+    <div class="card">
+      <div class="q-label" id="q-label">ด่าน 1 · ข้อ 1/10</div>
+      <div class="wrong-count" id="wrong-count">ตอบผิด: 0/2</div>
+      <div class="q-text" id="q-text">กำลังโหลด...</div>
+      <div class="choices" id="choices"></div>
+      <div class="feedback" id="feedback"></div>
+      <button class="btn-next hidden" id="btn-next" onclick="nextQuestion()">ไปข้อถัดไป →</button>
+    </div>
+  </div>
+
+  <!-- LEVEL PASSED -->
+  <div id="screen-level-pass" class="screen hidden">
+    <div class="big-icon">🌠</div>
+    <div class="inter-title" id="pass-title">ผ่านด่านที่ 1!</div>
+    <div class="inter-desc" id="pass-desc">ได้รับ 80 โกลด์</div>
+    <button class="btn-launch" onclick="backToWorld()">กลับสู่ฐาน →</button>
+  </div>
+
+  <!-- TIMEOUT -->
+  <div id="screen-timeout" class="screen hidden">
+    <div class="big-icon">⏰</div>
+    <div class="inter-title">หมดเวลา!</div>
+    <div class="inter-desc" id="timeout-desc">คุณตอบไม่ทันเวลา เสียไป 1 หัวใจ 💔</div>
+    <div class="btn-row">
+      <button class="btn-launch" onclick="startLevel()">ลองด่านนี้ใหม่</button>
+      <button class="btn-ghost" onclick="backToWorld()">กลับฐาน</button>
+    </div>
+  </div>
+
+  <!-- TOO MANY WRONG -->
+  <div id="screen-too-wrong" class="screen hidden">
+    <div class="big-icon">❌</div>
+    <div class="inter-title">ตอบผิดเกินเกณฑ์!</div>
+    <div class="inter-desc" id="too-wrong-desc">คุณตอบผิดเกิน 2 ข้อ เสียไป 1 หัวใจ 💔</div>
+    <div class="btn-row">
+      <button class="btn-launch" onclick="startLevel()">ลองด่านนี้ใหม่</button>
+      <button class="btn-ghost" onclick="backToWorld()">กลับฐาน</button>
+    </div>
+  </div>
+
+  <!-- GAME OVER -->
+  <div id="screen-gameover" class="screen hidden">
+    <div class="big-icon">💥</div>
+    <div class="inter-title">Game Over</div>
+    <div class="inter-desc">หัวใจของคุณหมดแล้ว ภารกิจล้มเหลว<br>ต้องเริ่มสร้างอาณานิคมใหม่ตั้งแต่ต้น</div>
+    <button class="btn-launch" onclick="resetAll()">🔄 เริ่มใหม่ตั้งแต่ต้น</button>
+  </div>
+
+  <!-- TRADING POST -->
+  <div id="screen-trading" class="screen hidden">
+    <div class="panel">
+      <h2>🏪 ที่ซื้อขาย</h2>
+      <div class="panel-desc">ใช้โกลด์อัปเกรดยาน เพื่อให้ขุดทรัพยากรได้มากขึ้นต่อครั้ง</div>
+      <div class="stat-row"><span>โกลด์ของคุณ</span><b id="tr-gold">0</b></div>
+      <div class="stat-row"><span>ระดับยานปัจจุบัน</span><b id="tr-level">0</b></div>
+      <div class="stat-row"><span>ผลผลิตต่อการขุด</span><b id="tr-yield">3-8 วัสดุ</b></div>
+      <div class="upgrade-box" id="tr-upgrade-box"></div>
+    </div>
+    <button class="btn-ghost" onclick="backToWorld()">← กลับฐาน</button>
+  </div>
+
+  <!-- MINING -->
+  <div id="screen-mining" class="screen hidden">
+    <div class="panel" style="text-align:center;">
+      <h2>⛏️ จุดขุดทรัพยากร</h2>
+      <div class="panel-desc">กดปุ่มเพื่อขุดวัสดุอุปกรณ์ ยานยิ่งดีขุดได้ยิ่งเยอะ</div>
+      <div class="stat-row"><span>วัสดุที่มี</span><b id="mn-materials">0</b></div>
+      <div class="stat-row"><span>ระดับยาน / ผลผลิต</span><b id="mn-yield">Lv.0 (3-8)</b></div>
+      <div class="mine-btn-wrap">
+        <button class="mine-btn" id="mine-btn" onclick="mineAction()">⛏️</button>
+      </div>
+      <div class="mine-feedback" id="mine-feedback">พร้อมขุด!</div>
+    </div>
+    <button class="btn-ghost" onclick="backToWorld()">← กลับฐาน</button>
+  </div>
+
+  <!-- COLONY -->
+  <div id="screen-colony" class="screen hidden">
+    <div class="panel" style="text-align:center;">
+      <h2>🏗️ ศูนย์บัญชาการอาณานิคม</h2>
+      <div class="panel-desc">สะสมวัสดุอุปกรณ์ให้ครบเพื่อสร้างอาณานิคมใหม่บนดาวดวงอื่น</div>
+      <div class="progress-track"><div class="progress-fill" id="col-fill"></div></div>
+      <div class="progress-label" id="col-label">0 / 400 วัสดุ</div>
+      <button class="btn-launch" id="col-launch-btn" onclick="launchColony()" disabled>🚀 ส่งยานตั้งอาณานิคม</button>
+    </div>
+    <button class="btn-ghost" onclick="backToWorld()">← กลับฐาน</button>
+  </div>
+
+  <!-- VICTORY -->
+  <div id="screen-victory" class="screen hidden">
+    <div class="big-icon">🏆</div>
+    <div class="inter-title">ตั้งอาณานิคมสำเร็จ!</div>
+    <div class="inter-desc">คุณพาชาวโลกไปสร้างบ้านใหม่ได้อย่างปลอดภัย</div>
+    <div class="victory-stats" id="victory-stats"></div>
+    <button class="btn-launch" onclick="resetAll()">🔄 เล่นอีกครั้ง</button>
+  </div>
+
+</div>
+
+<script>
+const LEVELS = [
+  { name:"ด่านที่ 1: รู้จักบ้านของเรา", desc:"คำถามพื้นฐานเกี่ยวกับระบบสุริยะ", timeSeconds:300, gold:80,
+    questions:[
+      { question:"สิ่งใดอยู่ศูนย์กลางของระบบสุริยะ?", choices:["โลก","ดวงจันทร์","ดวงอาทิตย์","ดาวพฤหัสบดี"], answer:2, explain:"ดวงอาทิตย์เป็นศูนย์กลางที่ดาวเคราะห์ทุกดวงโคจรรอบ" },
+      { question:"ดาวเคราะห์ดวงใดอยู่ใกล้ดวงอาทิตย์ที่สุด?", choices:["ดาวศุกร์","ดาวพุธ","โลก","ดาวอังคาร"], answer:1, explain:"ดาวพุธอยู่ใกล้ดวงอาทิตย์ที่สุด" },
+      { question:"โลกเป็นดาวเคราะห์ลำดับที่เท่าไรจากดวงอาทิตย์?", choices:["ลำดับที่ 1","ลำดับที่ 2","ลำดับที่ 3","ลำดับที่ 4"], answer:2, explain:"โลกอยู่ลำดับที่ 3 ถัดจากดาวพุธและดาวศุกร์" },
+      { question:"ดาวเคราะห์ดวงใดได้ฉายาว่า 'ดาวเคราะห์แดง'?", choices:["ดาวพฤหัสบดี","ดาวเสาร์","ดาวอังคาร","ดาวยูเรนัส"], answer:2, explain:"สนิมเหล็กบนพื้นผิวทำให้ดาวอังคารมีสีแดง" },
+      { question:"ดาวเคราะห์ดวงใดใหญ่ที่สุดในระบบสุริยะ?", choices:["ดาวเสาร์","ดาวพฤหัสบดี","โลก","ดาวยูเรนัส"], answer:1, explain:"ดาวพฤหัสบดีเป็นดาวเคราะห์ที่ใหญ่ที่สุด" },
+      { question:"ดาวเคราะห์ดวงใดมีวงแหวนสวยงามชัดเจนที่สุด?", choices:["ดาวเสาร์","ดาวศุกร์","โลก","ดาวพุธ"], answer:0, explain:"ดาวเสาร์มีวงแหวนน้ำแข็งและหินที่โดดเด่น" },
+      { question:"บริวารตามธรรมชาติของโลกเรียกว่าอะไร?", choices:["ดาวอังคาร","ดวงจันทร์","ดาวศุกร์","ไททัน"], answer:1, explain:"ดวงจันทร์เป็นบริวารเพียงดวงเดียวของโลก" },
+      { question:"ระบบสุริยะประกอบด้วยดาวเคราะห์ทั้งหมดกี่ดวง?", choices:["7 ดวง","8 ดวง","9 ดวง","10 ดวง"], answer:1, explain:"ปัจจุบันมีดาวเคราะห์ 8 ดวง (พลูโตถูกจัดเป็นดาวเคราะห์แคระ)" },
+      { question:"ดาวเคราะห์ดวงใดที่ร้อนที่สุดในระบบสุริยะ?", choices:["ดาวพุธ","ดาวศุกร์","ดาวอังคาร","โลก"], answer:1, explain:"ดาวศุกร์มีบรรยากาศหนาแน่นที่กักเก็บความร้อน จึงร้อนกว่าดาวพุธ" },
+      { question:"สิ่งใดคือดาวฤกษ์ในระบบสุริยะของเรา?", choices:["โลก","ดวงจันทร์","ดวงอาทิตย์","ดาวหาง"], answer:2, explain:"ดวงอาทิตย์เป็นดาวฤกษ์ที่ผลิตแสงและความร้อนได้เอง" }
+    ]
+  },
+  { name:"ด่านที่ 2: เพื่อนบ้านดาวเคราะห์", desc:"รู้จักลักษณะเฉพาะของดาวเคราะห์แต่ละดวง", timeSeconds:280, gold:140,
+    questions:[
+      { question:"ดาวเคราะห์ดวงใดหมุนรอบตัวเองเร็วที่สุด?", choices:["ดาวพฤหัสบดี","โลก","ดาวอังคาร","ดาวศุกร์"], answer:0, explain:"ดาวพฤหัสบดีหมุนรอบตัวเองเร็วมาก ใช้เวลาไม่ถึง 10 ชั่วโมง" },
+      { question:"ดาวเคราะห์ดวงใดหมุนรอบตัวเองช้าที่สุดและหมุนสวนทาง?", choices:["ดาวศุกร์","ดาวอังคาร","โลก","ดาวพุธ"], answer:0, explain:"ดาวศุกร์หมุนช้าและหมุนย้อนทิศทางกับดาวเคราะห์ส่วนใหญ่" },
+      { question:"ดวงจันทร์บริวารที่ใหญ่ที่สุดในระบบสุริยะชื่ออะไร และเป็นบริวารของดาวเคราะห์ดวงใด?", choices:["ไททัน ของดาวเสาร์","แกนีมีด ของดาวพฤหัสบดี","ไทรทัน ของดาวเนปจูน","ยูโรปา ของดาวพฤหัสบดี"], answer:1, explain:"แกนีมีดเป็นบริวารของดาวพฤหัสบดี และใหญ่กว่าดาวพุธเสียอีก" },
+      { question:"ดาวเคราะห์ดวงใดมีความหนาแน่นต่ำจนลอยน้ำได้ (ถ้ามีน้ำมากพอ)?", choices:["ดาวเสาร์","ดาวอังคาร","โลก","ดาวพุธ"], answer:0, explain:"ดาวเสาร์มีความหนาแน่นเฉลี่ยต่ำกว่าน้ำ" },
+      { question:"ดาวเคราะห์แคระที่มีชื่อเสียงและเคยถูกจัดเป็นดาวเคราะห์ดวงที่ 9 คือดวงใด?", choices:["ซีรีส","พลูโต","อีริส","มาคีมาคี"], answer:1, explain:"พลูโตถูกลดสถานะเป็นดาวเคราะห์แคระในปี 2006" },
+      { question:"ดาวอังคารมีดวงจันทร์บริวารกี่ดวง?", choices:["ไม่มีเลย","1 ดวง","2 ดวง","4 ดวง"], answer:2, explain:"ดาวอังคารมีบริวาร 2 ดวงคือโฟบอสและไดมอส" },
+      { question:"ข้อใดคือลักษณะเด่นของดาวยูเรนัส?", choices:["แกนหมุนเอียงเกือบ 90 องศา","ร้อนที่สุดในระบบสุริยะ","มีวงแหวนชัดเจนที่สุด","อยู่ใกล้ดวงอาทิตย์ที่สุด"], answer:0, explain:"ดาวยูเรนัสมีแกนเอียงมากจนดูเหมือน 'กลิ้ง' ไปตามวงโคจร" },
+      { question:"ดาวเคราะห์ดวงใดถูกค้นพบโดยการคำนวณทางคณิตศาสตร์ก่อนสังเกตเห็นจริง?", choices:["ดาวยูเรนัส","ดาวเนปจูน","ดาวอังคาร","ดาวเสาร์"], answer:1, explain:"นักดาราศาสตร์คำนวณตำแหน่งดาวเนปจูนจากแรงโน้มถ่วงที่รบกวนวงโคจรดาวยูเรนัส" },
+      { question:"พายุที่มีชื่อเสียงบนดาวพฤหัสบดีเรียกว่าอะไร?", choices:["จุดแดงใหญ่","ตาพายุเหนือ","วงแหวนไฟ","พายุขั้วโลก"], answer:0, explain:"จุดแดงใหญ่ (Great Red Spot) เป็นพายุหมุนขนาดใหญ่ที่พัดมานานหลายร้อยปี" },
+      { question:"ดาวเคราะห์ดวงใดในกลุ่มดาวเคราะห์ก๊าซยักษ์ที่อยู่ไกลดวงอาทิตย์ที่สุด?", choices:["ดาวเสาร์","ดาวยูเรนัส","ดาวเนปจูน","ดาวพฤหัสบดี"], answer:2, explain:"ดาวเนปจูนเป็นดาวเคราะห์ที่อยู่ไกลดวงอาทิตย์ที่สุดในระบบสุริยะ" }
+    ]
+  },
+  { name:"ด่านที่ 3: ดวงจันทร์และดาวหาง", desc:"สำรวจบริวาร ดาวหาง และแถบดาวเคราะห์น้อย", timeSeconds:260, gold:200,
+    questions:[
+      { question:"แถบดาวเคราะห์น้อยหลักตั้งอยู่ระหว่างดาวเคราะห์คู่ใด?", choices:["โลกกับดาวอังคาร","ดาวอังคารกับดาวพฤหัสบดี","ดาวพฤหัสบดีกับดาวเสาร์","ดาวเสาร์กับดาวยูเรนัส"], answer:1, explain:"แถบดาวเคราะห์น้อยหลักอยู่ระหว่างวงโคจรของดาวอังคารกับดาวพฤหัสบดี" },
+      { question:"ดวงจันทร์บริวารของดาวพฤหัสบดีที่เชื่อว่ามีมหาสมุทรน้ำแข็งใต้ผิวคือดวงใด?", choices:["ไอโอ","ยูโรปา","คัลลิสโต","แกนีมีด"], answer:1, explain:"ยูโรปามีชั้นน้ำแข็งปกคลุมและคาดว่ามีมหาสมุทรของเหลวอยู่ใต้ผิว" },
+      { question:"ดาวหางมีหางชี้ไปทางทิศใดเสมอเมื่อเข้าใกล้ดวงอาทิตย์?", choices:["ชี้ไปทางดวงอาทิตย์","ชี้ออกจากดวงอาทิตย์เสมอ","ชี้ไปทางโลกเสมอ","ไม่มีทิศทางแน่นอน"], answer:1, explain:"ลมสุริยะพัดฝุ่นและแก๊สออกจากดวงอาทิตย์ ทำให้หางชี้ออกจากดวงอาทิตย์เสมอ" },
+      { question:"วัตถุน้ำแข็งที่อยู่ไกลสุดของระบบสุริยะ เลยวงโคจรของดาวเนปจูน เรียกว่าเขตใด?", choices:["แถบไคเปอร์","เมฆออร์ต","แถบดาวเคราะห์น้อย","วงแหวนดาวเสาร์"], answer:0, explain:"แถบไคเปอร์เป็นบริเวณที่เต็มไปด้วยวัตถุน้ำแข็ง รวมถึงดาวพลูโต" },
+      { question:"ดวงจันทร์ดวงใดของดาวเสาร์มีทะเลสาบมีเทนเหลวบนพื้นผิว?", choices:["เอนเซลาดัส","ไททัน","มิมัส","รีอา"], answer:1, explain:"ไททันเป็นดวงจันทร์เดียวที่รู้จักว่ามีของเหลวคงตัวบนพื้นผิว (มีเทนเหลว)" },
+      { question:"ฝนดาวตกเกิดจากสิ่งใด?", choices:["โลกชนกับดาวเคราะห์น้อย","เศษฝุ่นจากดาวหางเผาไหม้ในบรรยากาศ","ดวงจันทร์ระเบิด","รังสีจากดวงอาทิตย์"], answer:1, explain:"เมื่อโลกโคจรผ่านเศษฝุ่นที่ดาวหางทิ้งไว้ เศษฝุ่นจะเผาไหม้เป็นแสงในบรรยากาศ" },
+      { question:"ดาวเคราะห์แคระเซเรส (Ceres) อยู่บริเวณใด?", choices:["แถบไคเปอร์","แถบดาวเคราะห์น้อยหลัก","เมฆออร์ต","วงแหวนดาวเสาร์"], answer:1, explain:"เซเรสเป็นวัตถุที่ใหญ่ที่สุดในแถบดาวเคราะห์น้อยหลัก" },
+      { question:"เมฆออร์ต (Oort Cloud) เชื่อกันว่าเป็นแหล่งกำเนิดของสิ่งใด?", choices:["ดาวเคราะห์น้อย","ดาวหางคาบยาว","วงแหวนดาวเสาร์","ลมสุริยะ"], answer:1, explain:"เมฆออร์ตอยู่ไกลสุดขอบระบบสุริยะ และเชื่อว่าเป็นต้นกำเนิดของดาวหางคาบยาว" },
+      { question:"ดวงจันทร์ของโลกก่อตัวขึ้นจากเหตุการณ์ใดตามทฤษฎีที่ได้รับการยอมรับมากที่สุด?", choices:["ถูกแรงโน้มถ่วงโลกดึงมา","วัตถุขนาดใหญ่พุ่งชนโลกในยุคแรกเริ่ม","ก่อตัวพร้อมโลกจากกลุ่มฝุ่นเดียวกัน","แยกตัวออกจากดาวอังคาร"], answer:1, explain:"ทฤษฎีการชนครั้งใหญ่ (Giant Impact) เชื่อว่าวัตถุขนาดเท่าดาวอังคารพุ่งชนโลก" },
+      { question:"ไอโอ ดวงจันทร์ของดาวพฤหัสบดี มีลักษณะพิเศษคือ?", choices:["เย็นจัดตลอดเวลา","มีภูเขาไฟระเบิดรุนแรงมากที่สุดในระบบสุริยะ","ปกคลุมด้วยน้ำแข็งทั้งดวง","มีวงแหวนของตัวเอง"], answer:1, explain:"แรงไทดัลจากดาวพฤหัสบดีทำให้ไอโอมีภูเขาไฟที่ยังคุกรุ่นอยู่มากมาย" }
+    ]
+  },
+  { name:"ด่านที่ 4: ฟิสิกส์ดาราศาสตร์เบื้องลึก", desc:"แรงโน้มถ่วง วงโคจร และปรากฏการณ์ที่ซับซ้อนขึ้น", timeSeconds:240, gold:280,
+    questions:[
+      { question:"กฎข้อใดของเคปเลอร์อธิบายว่าวงโคจรของดาวเคราะห์เป็นรูปวงรีโดยมีดวงอาทิตย์อยู่ที่จุดโฟกัสหนึ่ง?", choices:["กฎข้อที่ 1","กฎข้อที่ 2","กฎข้อที่ 3","ไม่มีข้อใดถูก"], answer:0, explain:"กฎข้อที่ 1 ของเคปเลอร์ระบุว่าวงโคจรเป็นวงรีโดยมีดวงอาทิตย์อยู่ที่โฟกัส" },
+      { question:"เหตุใดดาวพลูโตจึงถูกจัดเป็น 'ดาวเคราะห์แคระ' แทนที่จะเป็นดาวเคราะห์เต็มตัว?", choices:["มีขนาดเล็กเกินไป","ไม่ได้เคลียร์วงโคจรของตัวเองจากวัตถุอื่น","ไม่มีดวงจันทร์บริวาร","อยู่นอกระบบสุริยะ"], answer:1, explain:"ตามนิยามปี 2006 ดาวเคราะห์ต้องเคลียร์วงโคจรของตัวเองจากวัตถุอื่น ๆ ซึ่งพลูโตทำไม่ได้" },
+      { question:"ปรากฏการณ์ 'จุดใกล้ดวงอาทิตย์ที่สุด' ของวงโคจรเรียกว่าอะไร?", choices:["Aphelion","Perihelion","Perigee","Apogee"], answer:1, explain:"Perihelion คือจุดที่วัตถุอยู่ใกล้ดวงอาทิตย์ที่สุดในวงโคจร" },
+      { question:"เหตุใดดาวศุกร์จึงหมุนรอบตัวเองช้ากว่าที่มันโคจรรอบดวงอาทิตย์?", choices:["เพราะอยู่ใกล้ดวงอาทิตย์มาก","เพราะแรงไทดัลและบรรยากาศหนาแน่นทำให้การหมุนช้าลงมาก","เพราะไม่มีดวงจันทร์","เพราะมีมวลน้อย"], answer:1, explain:"แรงไทดัลจากดวงอาทิตย์และบรรยากาศที่หนาแน่นมากทำให้ดาวศุกร์หมุนช้าลงอย่างมาก" },
+      { question:"แสงจากดวงอาทิตย์ใช้เวลาประมาณเท่าไรจึงจะมาถึงโลก?", choices:["8 วินาที","8 นาที","8 ชั่วโมง","8 วัน"], answer:1, explain:"แสงเดินทางด้วยความเร็วคงที่และใช้เวลาประมาณ 8 นาที 20 วินาทีจากดวงอาทิตย์มาถึงโลก" },
+      { question:"ปรากฏการณ์ใดเกิดขึ้นเมื่อดวงจันทร์โคจรมาอยู่ระหว่างโลกกับดวงอาทิตย์พอดี?", choices:["จันทรุปราคา","สุริยุปราคา","ซูเปอร์มูน","ดวงจันทร์สีเลือด"], answer:1, explain:"สุริยุปราคาเกิดเมื่อดวงจันทร์บังแสงอาทิตย์ที่ส่องมายังโลก" },
+      { question:"เหตุใดดาวเนปจูนจึงมีลมแรงที่สุดในระบบสุริยะ แม้จะอยู่ไกลดวงอาทิตย์มาก?", choices:["เพราะมีสนามแม่เหล็กแรงมาก","ยังไม่ทราบสาเหตุแน่ชัด แต่เกี่ยวข้องกับพลังงานภายในดาว","เพราะอยู่ใกล้ดวงอาทิตย์ที่สุด","เพราะมีวงแหวนขนาดใหญ่"], answer:1, explain:"นักวิทยาศาสตร์ยังไม่แน่ใจสาเหตุทั้งหมด แต่เชื่อว่าพลังงานความร้อนภายในดาวมีส่วนเกี่ยวข้อง" },
+      { question:"เหตุการณ์ 'ซูเปอร์มูน' เกิดขึ้นเมื่อใด?", choices:["ดวงจันทร์เต็มดวงตรงกับจุดใกล้โลกที่สุดในวงโคจร","ดวงจันทร์อยู่ไกลโลกที่สุด","เกิดสุริยุปราคาเต็มดวง","ดวงจันทร์เปลี่ยนสีเป็นสีแดง"], answer:0, explain:"ซูเปอร์มูนเกิดเมื่อดวงจันทร์เต็มดวงอยู่ในตำแหน่งใกล้โลกที่สุด (perigee) ทำให้ดูใหญ่และสว่างกว่าปกติ" },
+      { question:"สนามแม่เหล็กของโลกมีบทบาทสำคัญอย่างไรต่อสิ่งมีชีวิต?", choices:["ทำให้เกิดฤดูกาล","ป้องกันลมสุริยะและรังสีคอสมิกที่เป็นอันตราย","ทำให้เกิดวงแหวนรอบโลก","ควบคุมการหมุนของโลก"], answer:1, explain:"สนามแม่เหล็กโลกเบี่ยงเบนอนุภาคมีประจุจากลมสุริยะ ปกป้องชั้นบรรยากาศและสิ่งมีชีวิต" },
+      { question:"เหตุใดนักดาราศาสตร์จึงเชื่อว่าอาจมีมหาสมุทรของเหลวใต้ผิวน้ำแข็งของเอนเซลาดัส?", choices:["สังเกตเห็นแม่น้ำบนพื้นผิว","พบไกเซอร์พ่นไอน้ำออกมาจากขั้วใต้","มีสีฟ้าเหมือนน้ำ","มีวงแหวนเหมือนดาวเสาร์"], answer:1, explain:"ยานอวกาศแคสสินีตรวจพบไกเซอร์น้ำแข็งพ่นออกมาจากรอยแตกบริเวณขั้วใต้ของเอนเซลาดัส" }
+    ]
+  },
+  { name:"ด่านที่ 5: ผู้เชี่ยวชาญระบบสุริยะ", desc:"คำถามระดับยากสำหรับนักดาราศาสตร์ตัวจริง", timeSeconds:220, gold:380,
+    questions:[
+      { question:"ระยะทาง 1 หน่วยดาราศาสตร์ (AU) มีค่าประมาณเท่าใด?", choices:["ระยะทางจากโลกถึงดวงจันทร์","ระยะทางจากโลกถึงดวงอาทิตย์ (~150 ล้านกิโลเมตร)","ระยะทางจากดวงอาทิตย์ถึงดาวพลูโต","1 ปีแสง"], answer:1, explain:"1 AU คือระยะทางเฉลี่ยจากโลกถึงดวงอาทิตย์ ประมาณ 150 ล้านกิโลเมตร" },
+      { question:"ทฤษฎีเนบิวลาสุริยะ (Solar Nebula) อธิบายถึงสิ่งใด?", choices:["การระเบิดของดวงอาทิตย์ในอนาคต","กำเนิดของระบบสุริยะจากกลุ่มก๊าซและฝุ่นที่ยุบตัว","สาเหตุของฝนดาวตก","การเกิดหลุมดำ"], answer:1, explain:"ทฤษฎีนี้อธิบายว่าระบบสุริยะเกิดจากกลุ่มเมฆก๊าซและฝุ่นที่ยุบตัวลงเมื่อราว 4,600 ล้านปีก่อน" },
+      { question:"เหตุใดดาวพุธจึงมีความแตกต่างของอุณหภูมิระหว่างกลางวันกับกลางคืนมากที่สุดในระบบสุริยะ?", choices:["อยู่ใกล้ดวงอาทิตย์และแทบไม่มีบรรยากาศกักเก็บความร้อน","หมุนรอบตัวเองเร็วมาก","มีวงแหวนบังแสง","มีน้ำแข็งปกคลุมทั้งดวง"], answer:0, explain:"ดาวพุธแทบไม่มีบรรยากาศ ความร้อนจึงหนีออกไปอย่างรวดเร็วในเวลากลางคืน" },
+      { question:"นักดาราศาสตร์ตรวจับดาวเคราะห์นอกระบบสุริยะ (exoplanet) ด้วยวิธีใดที่พบบ่อยที่สุด?", choices:["ถ่ายภาพโดยตรงเสมอ","วิธีการผ่านหน้า (Transit method) สังเกตแสงดาวลดลง","ฟังคลื่นวิทยุจากดาวเคราะห์","วัดอุณหภูมิพื้นผิวดาว"], answer:1, explain:"วิธี Transit สังเกตความสว่างของดาวฤกษ์ลดลงเล็กน้อยเมื่อดาวเคราะห์โคจรผ่านหน้า" },
+      { question:"เหตุใดวงแหวนของดาวเสาร์จึงถูกคาดการณ์ว่าอาจหายไปในอีกไม่กี่ร้อยล้านปีข้างหน้า?", choices:["วงแหวนกำลังเย็นตัวลง","แรงโน้มถ่วงของดาวเสาร์ค่อย ๆ ดึงอนุภาคน้ำแข็งตกลงสู่ชั้นบรรยากาศ","วงแหวนจะกลายเป็นดวงจันทร์ใหม่ทั้งหมด","ดวงอาทิตย์จะดึงวงแหวนออกไป"], answer:1, explain:"ปรากฏการณ์ 'ฝนวงแหวน' ทำให้อนุภาคน้ำแข็งตกลงสู่ดาวเสาต์อย่างต่อเนื่อง" },
+      { question:"ดาวฤกษ์อย่างดวงอาทิตย์ในช่วงท้ายของชีวิตจะกลายเป็นอะไร?", choices:["หลุมดำ","ดาวนิวตรอน","ดาวแคระขาว (หลังผ่านช่วงยักษ์แดง)","ซูเปอร์โนวา"], answer:2, explain:"ดวงอาทิตย์มีมวลไม่มากพอที่จะเป็นซูเปอร์โนวา จึงจะขยายเป็นดาวยักษ์แดงแล้วยุบเป็นดาวแคระขาว" },
+      { question:"เฮลิโอพอส (Heliopause) คือขอบเขตของสิ่งใด?", choices:["ขอบเขตแถบดาวเคราะห์น้อย","ขอบเขตที่ลมสุริยะสิ้นสุดและปะทะกับอวกาศระหว่างดวงดาว","ขอบเขตวงแหวนดาวเสาร์","ขอบเขตชั้นบรรยากาศโลก"], answer:1, explain:"เฮลิโอพอสคือขอบเขตที่ถือว่าเป็นจุดสิ้นสุดอิทธิพลของลมสุริยะจากดวงอาทิตย์" },
+      { question:"ปรากฏการณ์เรโทรเกรด (Retrograde motion) ของดาวเคราะห์ที่สังเกตจากโลกเกิดจากสิ่งใด?", choices:["ดาวเคราะห์หมุนกลับทิศจริง ๆ","มุมมองที่โลกแซงหรือถูกแซงระหว่างโคจรรอบดวงอาทิตย์","แรงโน้มถ่วงของดวงจันทร์","ดาวเคราะห์ชนกัน"], answer:1, explain:"เป็นภาพลวงตาที่เกิดจากความเร็วในการโคจรที่ต่างกันระหว่างโลกกับดาวเคราะห์ดวงอื่น" },
+      { question:"ข้อใดอธิบาย 'เขตอาศัยได้' (Habitable Zone) ได้ถูกต้องที่สุด?", choices:["บริเวณที่มีออกซิเจนในอวกาศ","ระยะห่างจากดาวฤกษ์ที่เหมาะสมให้น้ำเป็นของเหลวบนพื้นผิวดาวเคราะห์ได้","บริเวณที่ไม่มีรังสีคอสมิก","ตำแหน่งที่ดาวเคราะห์ไม่มีวงแหวน"], answer:1, explain:"เขตอาศัยได้คือระยะที่อุณหภูมิเหมาะสมพอให้น้ำคงสภาพเป็นของเหลวได้" },
+      { question:"ยานอวกาศลำใดเป็นลำแรกที่เดินทางออกจากระบบสุริยะสู่อวกาศระหว่างดวงดาว?", choices:["ยานอพอลโล 11","ยานวอยเอเจอร์ 1","ยานฮับเบิล","ยานคูริออซิตี"], answer:1, explain:"ยานวอยเอเจอร์ 1 เดินทางผ่านเฮลิโอพอสเข้าสู่อวกาศระหว่างดวงดาวในปี 2012" }
+    ]
+  }
+];
+
+const SHIP_LEVELS = [
+  { min:3,  max:8,  cost:0   },
+  { min:6,  max:14, cost:60  },
+  { min:10, max:22, cost:140 },
+  { min:16, max:32, cost:260 },
+  { min:24, max:45, cost:420 },
+  { min:34, max:60, cost:650 }
+];
+const HEART_TOTAL = 5;
+const MATERIALS_TARGET = 400;
+const MINING_COOLDOWN = 2000;
+const INVASION_INTERVAL = 60000; // 1 นาที
+
+// Event types
+const INVASION_EVENTS = [
+  { id:'meteor', name:'ฝนดาวตก', icon:'☄️', goldLoss:0.3, desc:'เงินหาย 30% เนื่องจากฝนดาวตกทำลายการเก็บเงิน' },
+  { id:'alien', name:'มิตรภาพที่ลึกลับ', icon:'👽', alienHelper:true, desc:'มนุษย์ต่างดาวมาช่วยขุด! +5🪙/วินาที ตลอดเกม' },
+  { id:'ink', name:'น้ำหมึกปริศนา', icon:'🖤', blindness:20, desc:'หน้าจอของคุณมืดลง 20 วินาที' },
+  { id:'diamond', name:'เพชรจากท้องฟ้า', icon:'💎', shipUpgrade:true, desc:'ยานได้อัปเกรดฟรี 1 เลเวล!' },
+  { id:'power', name:'พลังที่ลึกลับ', icon:'⚡', miningBoost:0.4, desc:'อัตราการขุดเพิ่ม 0.4 เท่า' }
+];
+
+/* ---------- global state ---------- */
+let hearts = HEART_TOTAL;
+let gold = 0;
+let totalGoldEarned = 0;
+let materials = 0;
+let shipLevel = 0;
+let levelsCompleted = [false,false,false,false,false];
+let levelIndex = 0;
+let qIndex = 0;
+let wrongAnswers = 0;
+let answered = false;
+let timeLeft = 0;
+let timerInterval = null;
+let campaignStartTime = null;
+let campaignTickInterval = null;
+let invasionInterval = null;
+let miningCooldownActive = false;
+let alienHelperActive = false;
+let alienHelperIncomeInterval = null;
+let blindnessActive = false;
+let miningBoostActive = false;
+let miningBoostEndTime = 0;
+let totalGameTime = 0; // ติดตามเวลาทั้งเกม (วินาที)
+let alienInvasionTriggered = false; // ป้องกันให้ alien invasion เรียกแค่ครั้งเดียว
+
+const screens = {};
+['title','world','levelSelect','levelIntro','quiz','levelPass','timeout','gameover','trading','mining','colony','victory','tooWrong']
+  .forEach(k => {
+    const screenId = 'screen-' + k.replace(/([A-Z])/g, m => '-' + m.toLowerCase());
+    screens[k] = document.getElementById(screenId);
+  });
+
+function showScreen(name){
+  Object.values(screens).forEach(s => s.classList.add('hidden'));
+  screens[name].classList.remove('hidden');
+}
+
+function fmtTime(sec){
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return String(m).padStart(2,'0') + ':' + String(s).padStart(2, '0');
+}
+
+/* ---------- campaign lifecycle ---------- */
+function startCampaign(){
+  hearts = HEART_TOTAL; gold = 0; totalGoldEarned = 0; materials = 0; shipLevel = 0;
+  levelsCompleted = [false,false,false,false,false];
+  wrongAnswers = 0;
+  alienHelperActive = false;
+  blindnessActive = false;
+  miningBoostActive = false;
+  totalGameTime = 0;
+  alienInvasionTriggered = false;
+  campaignStartTime = Date.now();
+  if (campaignTickInterval) clearInterval(campaignTickInterval);
+  campaignTickInterval = setInterval(() => {
+    totalGameTime = Math.floor((Date.now() - campaignStartTime) / 1000);
+    // ตรวจเมื่อเกิน 5 นาที (300 วินาที) แต่เรียกแค่ครั้งเดียว
+    if (totalGameTime >= 300 && !alienInvasionTriggered){
+      alienInvasionTriggered = true;
+      triggerAlienInvasion();
+    }
+    updateWorldHud();
+  }, 500);
+  if (invasionInterval) clearInterval(invasionInterval);
+  invasionInterval = setInterval(triggerInvasionEvent, INVASION_INTERVAL);
+  showScreen('world');
+  resizeCanvas();
+  resetPlayerPosition();
+  isWorldActive = true;
+  ensureWorldLoop();
+  updateWorldHud();
+}
+
+function resetAll(){
+  if (timerInterval) clearInterval(timerInterval);
+  if (campaignTickInterval) clearInterval(campaignTickInterval);
+  if (invasionInterval) clearInterval(invasionInterval);
+  if (alienHelperIncomeInterval) clearInterval(alienHelperIncomeInterval);
+  alienHelperActive = false;
+  document.getElementById('alien-helper').classList.remove('show');
+  isWorldActive = false;
+  showScreen('title');
+}
+
+function backToWorld(){
+  showScreen('world');
+  resizeCanvas();
+  isWorldActive = true;
+  ensureWorldLoop();
+  updateWorldHud();
+}
+
+function updateWorldHud(){
+  document.getElementById('w-gold').textContent = Math.floor(gold);
+  document.getElementById('w-materials').textContent = materials;
+  document.getElementById('w-target').textContent = MATERIALS_TARGET;
+  document.getElementById('w-ship').textContent = shipLevel;
+  const heartsEl = document.getElementById('w-hearts');
+  heartsEl.innerHTML = '';
+  for (let i=0;i<HEART_TOTAL;i++){
+    const s = document.createElement('span');
+    s.textContent = i < hearts ? '❤️' : '🖤';
+    heartsEl.appendChild(s);
+  }
+  if (campaignStartTime){
+    let timeDisplay = fmtTime(totalGameTime);
+    const timeEl = document.getElementById('w-time');
+    if (totalGameTime >= 300){
+      timeDisplay += ' 👾';
+      timeEl.style.color = '#d4483c';
+    } else if (totalGameTime >= 280) {
+      timeDisplay += ' ⚠️';
+      timeEl.style.color = '#f4c15c';
+    } else {
+      timeEl.style.color = 'var(--star)';
+    }
+    timeEl.textContent = timeDisplay;
+  }
+}
+
+/* ---------- invasion events ---------- */
+function triggerInvasionEvent(){
+  // ไม่ควรเกิดเมื่อเล่นเกิน 5 นาทีแล้ว (อเลี่ยนจะมาโจมตี)
+  if (totalGameTime >= 300) {
+    if (invasionInterval) clearInterval(invasionInterval);
+    return;
+  }
+  
+  triggerRandomEvent([]);
+}
+
+function triggerRandomEvent(excludeIds){
+  // เลือก event โดยไม่รวม event ที่ผ่านมา
+  let availableEvents = INVASION_EVENTS.filter(e => !excludeIds.includes(e.id));
+  if (availableEvents.length === 0) availableEvents = INVASION_EVENTS;
+  
+  const event = availableEvents[Math.floor(Math.random() * availableEvents.length)];
+  
+  if (event.id === 'meteor'){
+    const loss = Math.floor(gold * event.goldLoss);
+    gold = Math.max(0, gold - loss);
+    showEventPopup(event.icon, event.name, `${event.desc}\n\nเสียไป ${loss} 🪙`);
+  } else if (event.id === 'alien'){
+    if (!alienHelperActive){
+      alienHelperActive = true;
+      // เพิ่ม 60 เหรียญทุกๆ 60 วินาที
+      if (alienHelperIncomeInterval) clearInterval(alienHelperIncomeInterval);
+      alienHelperIncomeInterval = setInterval(() => {
+        if (alienHelperActive){
+          gold += 60;
+        }
+      }, 60000);
+      showEventPopup(event.icon, event.name, event.desc);
+    } else {
+      // ถ้าได้เอเลี่ยนแล้ว ให้เกิด event อื่นแทน
+      triggerRandomEvent([event]);
+      return;
+    }
+  } else if (event.id === 'ink'){
+    blindnessActive = true;
+    document.getElementById('ink-overlay').classList.add('show');
+    setTimeout(() => {
+      blindnessActive = false;
+      document.getElementById('ink-overlay').classList.remove('show');
+    }, event.blindness * 1000);
+    showEventPopup(event.icon, event.name, event.desc);
+  } else if (event.id === 'diamond'){
+    if (shipLevel < SHIP_LEVELS.length - 1){
+      shipLevel++;
+      showEventPopup(event.icon, event.name, event.desc);
+    } else {
+      showEventPopup(event.icon, event.name, 'ยานของคุณอัปเกรดสูงสุดแล้ว!');
+    }
+  } else if (event.id === 'power'){
+    miningBoostActive = true;
+    miningBoostEndTime = Date.now() + 999999999; // ตลอดเกม
+    showEventPopup(event.icon, event.name, event.desc);
+  }
+}
+
+function showEventPopup(icon, title, desc){
+  document.getElementById('event-icon').textContent = icon;
+  document.getElementById('event-title').textContent = title;
+  document.getElementById('event-desc').textContent = desc;
+  document.getElementById('event-overlay').classList.add('show');
+}
+
+function closeEventPopup(){
+  document.getElementById('event-overlay').classList.remove('show');
+  const closeBtn = document.getElementById('event-confirm-btn');
+  closeBtn.textContent = 'ตกลง';
+  closeBtn.onclick = () => closeEventPopup();
+}
+
+function triggerAlienInvasion(){
+  // หยุดเหตุการณ์อื่น เมื่อมีการโจมตี
+  if (invasionInterval) clearInterval(invasionInterval);
+  
+  const heartsLost = hearts;
+  hearts = 0;
+  showEventPopup('👾', 'การโจมตีของอเลี่ยน!', 'เอเลี่ยนจากต่างดาวมาโจมตีอารยะธรรมของเรา!\nเสียไป ' + heartsLost + ' หัวใจ 💔 หัวใจหมดแล้ว!');
+  
+  // ถ้าหัวใจหมด ให้จบเกมหลังปิด popup
+  const closeBtn = document.getElementById('event-confirm-btn');
+  closeBtn.textContent = 'ยอมแพ้ 💔';
+  closeBtn.onclick = () => {
+    document.getElementById('event-overlay').classList.remove('show');
+    showScreen('gameover');
+  };
+}
+
+/* ---------- world map: canvas + movement ---------- */
+const canvas = document.getElementById('game-canvas');
+const ctx2 = canvas.getContext('2d');
+
+// Set canvas to fullscreen
+function resizeCanvas(){
+  const oldW=canvas.width||window.innerWidth, oldH=canvas.height||window.innerHeight;
+  const rx=oldW?player?.x/oldW:.5, ry=oldH?player?.y/oldH:.5;
+  canvas.width=Math.max(320,window.innerWidth);
+  canvas.height=Math.max(480,window.innerHeight);
+  if(typeof player!=='undefined'&&player.x){player.x=rx*canvas.width;player.y=ry*canvas.height}
+}
+window.addEventListener('resize',resizeCanvas);
+
+const ZONES = [
+  { id:'launch', name:'ฐานปล่อยยาน', icon:'🚀', nx:.18, ny:.27 },
+  { id:'trade',  name:'ที่ซื้อขาย', icon:'🏪', nx:.82, ny:.27 },
+  { id:'mine',   name:'จุดขุดทรัพยากร', icon:'⛏️', nx:.18, ny:.74 },
+  { id:'colony', name:'ศูนย์บัญชาการ', icon:'🏗️', nx:.82, ny:.74 }
+];
+const player = { x:0, y:0, r:15, speed:4.2 };
+const keys = new Set();
+let nearZone = null;
+let isWorldActive = false;
+let worldRAF = 0;
+
+function resetPlayerPosition(){ player.x=canvas.width/2; player.y=canvas.height/2; }
+
+function zoneRect(z){
+  const w=Math.max(112,Math.min(160,canvas.width*.18));
+  const h=Math.max(88,Math.min(112,canvas.height*.16));
+  return {x:z.nx*canvas.width-w/2,y:z.ny*canvas.height-h/2,w,h};
+}
+function setMoveKey(k,on){ if(on) keys.add(k); else keys.delete(k); }
+
+window.addEventListener('keydown',e=>{
+  const k=e.key.toLowerCase();
+  if(['arrowup','arrowdown','arrowleft','arrowright','w','a','s','d'].includes(k)){
+    e.preventDefault(); setMoveKey(k,true);
+  }
+  if(k==='e'&&isWorldActive&&nearZone&&!blindnessActive) interact(nearZone.id);
+},{passive:false});
+window.addEventListener('keyup',e=>setMoveKey(e.key.toLowerCase(),false));
+window.addEventListener('blur',()=>keys.clear());
+
+const dpad=document.getElementById('dpad');
+const dirMap={up:'arrowup',down:'arrowdown',left:'arrowleft',right:'arrowright'};
+dpad.querySelectorAll('button[data-dir]').forEach(btn=>{
+  const key=dirMap[btn.dataset.dir];
+  const down=e=>{e.preventDefault();setMoveKey(key,true);};
+  const up=e=>{e.preventDefault();setMoveKey(key,false);};
+  btn.addEventListener('pointerdown',down);
+  btn.addEventListener('pointerup',up);
+  btn.addEventListener('pointercancel',up);
+  btn.addEventListener('pointerleave',up);
+});
+document.getElementById('dpad-interact').addEventListener('pointerup',e=>{
+  e.preventDefault();
+  if(!isWorldActive||blindnessActive)return;
+  if(nearZone) interact(nearZone.id);
+});
+
+function updatePlayer(){
+  let dx=0,dy=0;
+  if(keys.has('arrowup')||keys.has('w'))dy--;
+  if(keys.has('arrowdown')||keys.has('s'))dy++;
+  if(keys.has('arrowleft')||keys.has('a'))dx--;
+  if(keys.has('arrowright')||keys.has('d'))dx++;
+  if(dx&&dy){dx*=.7071;dy*=.7071}
+  player.x=Math.max(player.r,Math.min(canvas.width-player.r,player.x+dx*player.speed));
+  player.y=Math.max(player.r,Math.min(canvas.height-player.r,player.y+dy*player.speed));
+
+  nearZone=null;
+  for(const z of ZONES){
+    const q=zoneRect(z);
+    const cx=Math.max(q.x,Math.min(player.x,q.x+q.w));
+    const cy=Math.max(q.y,Math.min(player.y,q.y+q.h));
+    if(Math.hypot(player.x-cx,player.y-cy)<player.r+28){nearZone=z;break}
+  }
+  const prompt=document.getElementById('zone-prompt');
+  if(nearZone&&!blindnessActive){
+    prompt.textContent='กด E: '+nearZone.name;
+    prompt.classList.add('show');
+  }else prompt.classList.remove('show');
+}
+
+function drawWorld(){
+  ctx2.clearRect(0,0,canvas.width,canvas.height);
+  if(blindnessActive){
+    ctx2.fillStyle='rgba(20,15,40,.94)';ctx2.fillRect(0,0,canvas.width,canvas.height);
+    ctx2.fillStyle='#a8a3c4';ctx2.font='18px Sarabun,sans-serif';ctx2.textAlign='center';
+    ctx2.fillText('มองไม่เห็น... 🖤',canvas.width/2,canvas.height/2);return;
+  }
+  ctx2.strokeStyle='rgba(122,110,180,.09)';ctx2.lineWidth=1;
+  for(let x=0;x<canvas.width;x+=44){ctx2.beginPath();ctx2.moveTo(x,0);ctx2.lineTo(x,canvas.height);ctx2.stroke()}
+  for(let y=0;y<canvas.height;y+=44){ctx2.beginPath();ctx2.moveTo(0,y);ctx2.lineTo(canvas.width,y);ctx2.stroke()}
+
+  for(const z of ZONES){
+    const q=zoneRect(z),near=nearZone&&nearZone.id===z.id;
+    ctx2.fillStyle=near?'rgba(244,193,92,.22)':'rgba(122,110,180,.16)';
+    ctx2.strokeStyle=near?'#f4c15c':'rgba(255,255,255,.3)';ctx2.lineWidth=near?3:2;
+    roundRect(ctx2,q.x,q.y,q.w,q.h,16);ctx2.fill();ctx2.stroke();
+    ctx2.textAlign='center';ctx2.fillStyle='#e8e6f0';ctx2.font='34px sans-serif';
+    ctx2.fillText(z.icon,q.x+q.w/2,q.y+q.h/2+5);
+    ctx2.font='600 13px Sarabun,sans-serif';ctx2.fillStyle=near?'#f4c15c':'#d7d4e4';
+    ctx2.fillText(z.name,q.x+q.w/2,q.y+q.h-10);
+  }
+  ctx2.beginPath();ctx2.arc(player.x,player.y,player.r+7,0,Math.PI*2);
+  ctx2.fillStyle='rgba(74,155,209,.18)';ctx2.fill();
+  ctx2.beginPath();ctx2.arc(player.x,player.y,player.r,0,Math.PI*2);
+  ctx2.fillStyle='#4a9bd1';ctx2.fill();ctx2.strokeStyle='#7ad0c6';ctx2.lineWidth=2;ctx2.stroke();
+  ctx2.font='18px sans-serif';ctx2.textAlign='center';ctx2.fillText('🧑‍🚀',player.x,player.y+6);
+}
+function roundRect(c,x,y,w,h,r){
+  c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);
+  c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();
+}
+function gameLoop(){
+  if(!isWorldActive){worldRAF=0;return}
+  updatePlayer();drawWorld();updateWorldHud();worldRAF=requestAnimationFrame(gameLoop);
+}
+function ensureWorldLoop(){if(!worldRAF)worldRAF=requestAnimationFrame(gameLoop)}
+function interact(zoneId){
+  if(!isWorldActive)return;
+  isWorldActive=false;keys.clear();
+  if(zoneId==='launch')openLaunchPad();
+  else if(zoneId==='trade')openTradingPost();
+  else if(zoneId==='mine')openMining();
+  else if(zoneId==='colony')openColony();
+}
+
+resizeCanvas();
+/* ---------- launch pad / level select ---------- */
+function openLaunchPad(){
+  const container = document.getElementById('level-cards');
+  container.innerHTML = '';
+  LEVELS.forEach((lvl, i) => {
+    const card = document.createElement('div');
+    const done = levelsCompleted[i];
+    card.className = 'level-card' + (done ? ' locked' : '');
+    const cardText =
+      '<div class="lc-info">' +
+        '<div class="lc-name">' + lvl.name + (done ? ' <span class="lc-badge">ผ่านแล้ว ✅</span>' : '') + '</div>' +
+        '<div class="lc-meta">10 ข้อ · ' + fmtTime(lvl.timeSeconds) + ' นาที · รางวัล 🪙' + lvl.gold + '</div>' +
+      '</div>';
+    const btn = document.createElement('button');
+    btn.className = 'lc-start';
+    btn.disabled = done;
+    btn.textContent = done ? 'ไม่สามารถเล่นซ้ำ' : 'เริ่มด่านนี้';
+    btn.onclick = () => { if (!done) chooseLevel(i); };
+    card.innerHTML = cardText;
+    card.appendChild(btn);
+    container.appendChild(card);
+  });
+  showScreen('levelSelect');
+}
+
+function chooseLevel(i){
+  levelIndex = i;
+  const lvl = LEVELS[i];
+  document.getElementById('li-title').textContent = lvl.name;
+  document.getElementById('li-desc').textContent = lvl.desc;
+  document.getElementById('li-qcount').textContent = lvl.questions.length + ' ข้อ';
+  document.getElementById('li-time').textContent = fmtTime(lvl.timeSeconds);
+  document.getElementById('li-reward').textContent = lvl.gold + ' โกลด์';
+  showScreen('levelIntro');
+}
+
+/* ---------- quiz flow ---------- */
+function startLevel(){
+  qIndex = 0;
+  wrongAnswers = 0;
+  const lvl = LEVELS[levelIndex];
+  timeLeft = lvl.timeSeconds;
+  renderHearts();
+  buildTrack();
+  showScreen('quiz');
+  renderQuestion();
+  startTimer();
+}
+
+function renderHearts(){
+  const el = document.getElementById('hearts');
+  el.innerHTML = '';
+  for (let i = 0; i < HEART_TOTAL; i++){
+    const span = document.createElement('span');
+    span.className = 'heart' + (i < hearts ? '' : ' lost');
+    span.textContent = '❤️';
+    el.appendChild(span);
+  }
+}
+
+function startTimer(){
+  if (timerInterval) clearInterval(timerInterval);
+  updateTimerDisplay();
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    updateTimerDisplay();
+    if (timeLeft <= 0){
+      clearInterval(timerInterval);
+      handleTimeout();
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay(){
+  const lvl = LEVELS[levelIndex];
+  const timerEl = document.getElementById('timer');
+  const fillEl = document.getElementById('timebar-fill');
+  timerEl.textContent = fmtTime(Math.max(timeLeft, 0));
+  const pct = Math.max(timeLeft, 0) / lvl.timeSeconds * 100;
+  fillEl.style.width = pct + '%';
+  timerEl.classList.toggle('low', timeLeft <= 20);
+}
+
+function buildTrack(){
+  const track = document.getElementById('track');
+  track.innerHTML = '';
+  LEVELS[levelIndex].questions.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot';
+    d.id = 'dot-' + i;
+    track.appendChild(d);
+  });
+}
+function markCurrentDot(){
+  document.querySelectorAll('#track .dot').forEach(d => d.classList.remove('current'));
+  const d = document.getElementById('dot-' + qIndex);
+  if (d) d.classList.add('current');
+}
+function updateTrack(status){
+  const d = document.getElementById('dot-' + qIndex);
+  if (d && status) d.classList.add(status);
+}
+
+function renderQuestion(){
+  answered = false;
+  const lvl = LEVELS[levelIndex];
+  const q = lvl.questions[qIndex];
+  document.getElementById('q-label').textContent = lvl.name.split(':')[0] + ' · ข้อ ' + (qIndex + 1) + '/' + lvl.questions.length;
+  document.getElementById('wrong-count').textContent = 'ตอบผิด: ' + wrongAnswers + '/2';
+  document.getElementById('q-text').textContent = q.question;
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('btn-next').classList.add('hidden');
+  markCurrentDot();
+
+  const choicesEl = document.getElementById('choices');
+  choicesEl.innerHTML = '';
+  q.choices.forEach((choiceText, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice';
+    btn.textContent = choiceText;
+    btn.onclick = () => selectAnswer(i);
+    choicesEl.appendChild(btn);
+  });
+}
+
+function selectAnswer(i){
+  if (answered) return;
+  answered = true;
+  const lvl = LEVELS[levelIndex];
+  const q = lvl.questions[qIndex];
+  const buttons = document.querySelectorAll('#choices .choice');
+  buttons.forEach(b => b.disabled = true);
+
+  if (i === q.answer){
+    buttons[i].classList.add('correct');
+    document.getElementById('feedback').textContent = '✅ ถูกต้อง! ' + (q.explain || '');
+    updateTrack('done');
+  } else {
+    buttons[i].classList.add('wrong');
+    buttons[q.answer].classList.add('correct');
+    document.getElementById('feedback').textContent = '❌ ยังไม่ถูก ' + (q.explain || '');
+    updateTrack('wrong');
+    wrongAnswers++;
+    document.getElementById('wrong-count').textContent = 'ตอบผิด: ' + wrongAnswers + '/2';
+    
+    // Check if wrong too many times
+    if (wrongAnswers > 2){
+      document.getElementById('btn-next').classList.remove('hidden');
+      document.getElementById('btn-next').textContent = 'ตอบผิดเกิน 2 ข้อ - ออกจากด่าน';
+      document.getElementById('btn-next').onclick = () => handleTooWrong();
+      return;
+    }
+  }
+  document.getElementById('btn-next').classList.remove('hidden');
+  document.getElementById('btn-next').textContent = (qIndex === lvl.questions.length - 1) ? 'สรุปด่านนี้ →' : 'ไปข้อถัดไป →';
+  document.getElementById('btn-next').onclick = () => nextQuestion();
+}
+
+function nextQuestion(){
+  const lvl = LEVELS[levelIndex];
+  qIndex++;
+  if (qIndex >= lvl.questions.length){
+    clearInterval(timerInterval);
+    levelPassed();
+  } else {
+    renderQuestion();
+  }
+}
+
+function levelPassed(){
+  const lvl = LEVELS[levelIndex];
+  let goldReward = lvl.gold;
+  // ลดเงิน 20% สำหรับทุกครั้งที่ตอบผิด
+  goldReward = Math.floor(goldReward * (1 - wrongAnswers * 0.2));
+  gold += goldReward;
+  totalGoldEarned += goldReward;
+  levelsCompleted[levelIndex] = true;
+  document.getElementById('pass-title').textContent = 'ผ่าน ' + lvl.name + '!';
+  document.getElementById('pass-desc').textContent = 'ได้รับ 🪙 ' + goldReward + ' โกลด์' + (wrongAnswers > 0 ? ' (ลด ' + (wrongAnswers * 20) + '% จากการตอบผิด)' : '') + ' (รวม ' + gold + ' โกลด์)';
+  showScreen('levelPass');
+}
+
+function handleTooWrong(){
+  hearts--;
+  const lvl = LEVELS[levelIndex];
+  document.getElementById('too-wrong-desc').innerHTML =
+    'คุณตอบผิดเกิน 2 ข้อใน ' + lvl.name + '<br>เสียไป 1 หัวใจ 💔 เหลือ ' + hearts + ' หัวใจ';
+  if (hearts <= 0){
+    clearInterval(timerInterval);
+    showScreen('gameover');
+  } else {
+    clearInterval(timerInterval);
+    showScreen('tooWrong');
+  }
+}
+
+function handleTimeout(){
+  hearts--;
+  const lvl = LEVELS[levelIndex];
+  document.getElementById('timeout-desc').innerHTML =
+    'คุณตอบไม่ทันเวลาใน ' + lvl.name + '<br>เสียไป 1 หัวใจ 💔 เหลือ ' + hearts + ' หัวใจ';
+  if (hearts <= 0){
+    showScreen('gameover');
+  } else {
+    showScreen('timeout');
+  }
+}
+
+/* ---------- trading post ---------- */
+function openTradingPost(){
+  document.getElementById('tr-gold').textContent = gold;
+  document.getElementById('tr-level').textContent = shipLevel;
+  const cur = SHIP_LEVELS[shipLevel];
+  let yieldText = cur.min + '-' + cur.max;
+  if (miningBoostActive) yieldText += ' × 1.4 (พลังลึกลับ)';
+  document.getElementById('tr-yield').textContent = yieldText + ' วัสดุ/ครั้ง';
+
+  const box = document.getElementById('tr-upgrade-box');
+  box.innerHTML = '';
+  if (shipLevel >= SHIP_LEVELS.length - 1){
+    box.innerHTML = '<div style="text-align:center; color:var(--text-dim); font-size:0.88rem;">🚀 ยานของคุณอัปเกรดสูงสุดแล้ว!</div>';
+  } else {
+    const next = SHIP_LEVELS[shipLevel + 1];
+    const canAfford = gold >= next.cost;
+    box.innerHTML =
+      '<div class="stat-row"><span>อัปเกรดเป็นระดับ ' + (shipLevel+1) + '</span><b>' + next.min + '-' + next.max + ' วัสดุ/ครั้ง</b></div>' +
+      '<div class="stat-row"><span>ราคา</span><b>🪙 ' + next.cost + '</b></div>';
+    const btn = document.createElement('button');
+    btn.className = 'btn-launch';
+    btn.style.marginTop = '12px';
+    btn.style.width = '100%';
+    btn.textContent = canAfford ? 'อัปเกรดยาน 🚀' : 'โกลด์ไม่พอ';
+    btn.disabled = !canAfford;
+    if (!canAfford) btn.style.opacity = '0.4';
+    btn.onclick = () => upgradeShip(next.cost);
+    box.appendChild(btn);
+  }
+  showScreen('trading');
+}
+
+function upgradeShip(cost){
+  if (gold < cost) return;
+  gold -= cost;
+  shipLevel++;
+  openTradingPost();
+}
+
+/* ---------- mining ---------- */
+function openMining(){
+  refreshMiningScreen();
+  showScreen('mining');
+}
+function refreshMiningScreen(){
+  document.getElementById('mn-materials').textContent = materials;
+  const cur = SHIP_LEVELS[shipLevel];
+  let yieldText = 'Lv.' + shipLevel + ' (' + cur.min + '-' + cur.max + ')';
+  if (miningBoostActive) yieldText += ' × 1.4';
+  document.getElementById('mn-yield').textContent = yieldText;
+}
+function mineAction(){
+  if (miningCooldownActive) return;
+  const cur = SHIP_LEVELS[shipLevel];
+  let yieldAmount = Math.floor(Math.random() * (cur.max - cur.min + 1)) + cur.min;
+  if (miningBoostActive) yieldAmount = Math.floor(yieldAmount * 1.4);
+  materials += yieldAmount;
+  document.getElementById('mine-feedback').textContent = '⛏️ ได้วัสดุ +' + yieldAmount + (miningBoostActive ? ' (พลังลึกลับ!)' : '') + '!';
+  refreshMiningScreen();
+
+  miningCooldownActive = true;
+  const btn = document.getElementById('mine-btn');
+  btn.disabled = true;
+  let remain = MINING_COOLDOWN / 1000;
+  btn.textContent = remain;
+  const cd = setInterval(() => {
+    remain--;
+    if (remain <= 0){
+      clearInterval(cd);
+      btn.disabled = false;
+      btn.textContent = '⛏️';
+      miningCooldownActive = false;
+    } else {
+      btn.textContent = remain;
+    }
+  }, 1000);
+}
+
+/* ---------- colony ---------- */
+function openColony(){
+  const pct = Math.min(100, (materials / MATERIALS_TARGET) * 100);
+  document.getElementById('col-fill').style.width = pct + '%';
+  document.getElementById('col-label').textContent = materials + ' / ' + MATERIALS_TARGET + ' วัสดุ';
+  const btn = document.getElementById('col-launch-btn');
+  const ready = materials >= MATERIALS_TARGET;
+  btn.disabled = !ready;
+  btn.style.opacity = ready ? '1' : '0.45';
+  showScreen('colony');
+}
+
+function launchColony(){
+  if (materials < MATERIALS_TARGET) return;
+  clearInterval(campaignTickInterval);
+  clearInterval(invasionInterval);
+  if (alienHelperIncomeInterval) clearInterval(alienHelperIncomeInterval);
+  alienHelperActive = false;
+  const elapsedSec = Math.floor((Date.now() - campaignStartTime)/1000);
+  const completedCount = levelsCompleted.filter(Boolean).length;
+  document.getElementById('victory-stats').innerHTML =
+    '⏱️ เวลารวมที่ใช้: <b>' + fmtTime(elapsedSec) + '</b><br>' +
+    '🚀 ระดับยานสูงสุด: <b>Lv.' + shipLevel + '</b><br>' +
+    '🪙 โกลด์ที่หามาได้ทั้งหมด: <b>' + totalGoldEarned + '</b><br>' +
+    '📚 ด่านความรู้ที่ผ่าน: <b>' + completedCount + ' / ' + LEVELS.length + '</b><br>' +
+    '🧱 วัสดุที่สะสม: <b>' + materials + '</b>';
+  showScreen('victory');
+}
+
+/* ---------- starfield background ---------- */
+const starsCanvas = document.getElementById('stars');
+const sctx = starsCanvas.getContext('2d');
+function resizeStars(){ starsCanvas.width = window.innerWidth; starsCanvas.height = window.innerHeight; }
+resizeStars();
+window.addEventListener('resize', resizeStars);
+const stars = Array.from({length: 120}, () => ({
+  x: Math.random() * window.innerWidth, y: Math.random() * window.innerHeight,
+  r: Math.random() * 1.4 + 0.3, a: Math.random(), d: (Math.random() * 0.02) + 0.005
+}));
+function drawStars(){
+  sctx.clearRect(0, 0, starsCanvas.width, starsCanvas.height);
+  stars.forEach(s => {
+    s.a += s.d;
+    const alpha = Math.abs(Math.sin(s.a));
+    sctx.beginPath();
+    sctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    sctx.fillStyle = 'rgba(255,255,255,' + alpha + ')';
+    sctx.fill();
+  });
+  requestAnimationFrame(drawStars);
+}
+drawStars();
+
+// Create planets in space background
+function createPlanets(){
+  const container = document.getElementById('planets-container');
+  
+  // Planets data: [name, x, y, size, class]
+  const planets = [
+    // Sun (upper left)
+    { name: 'sun', x: 10, y: 5, size: 140, class: 'sun' },
+    
+    // Mercury (top)
+    { name: 'mercury', x: 25, y: 15, size: 25, class: 'mercury' },
+    
+    // Venus (top right)
+    { name: 'venus', x: 35, y: 12, size: 50, class: 'venus' },
+    
+    // Earth (right side, middle)
+    { name: 'earth', x: 75, y: 35, size: 65, class: 'earth' },
+    
+    // Moon near Earth
+    { name: 'moon', x: 78, y: 40, size: 22, class: 'moon' },
+    
+    // Mars (bottom right)
+    { name: 'mars', x: 70, y: 70, size: 45, class: 'mars' },
+    
+    // Jupiter (lower left)
+    { name: 'jupiter', x: 15, y: 75, size: 110, class: 'jupiter' },
+    
+    // Saturn (bottom center)
+    { name: 'saturn', x: 50, y: 80, size: 95, class: 'saturn' },
+    
+    // Uranus (right side)
+    { name: 'uranus', x: 85, y: 50, size: 75, class: 'uranus' },
+    
+    // Neptune (far right bottom)
+    { name: 'neptune', x: 88, y: 65, size: 70, class: 'neptune' }
+  ];
+  
+  planets.forEach(p => {
+    const planet = document.createElement('div');
+    planet.className = `planet ${p.class}`;
+    planet.style.width = p.size + 'px';
+    planet.style.height = p.size + 'px';
+    planet.style.left = p.x + '%';
+    planet.style.top = p.y + '%';
+    planet.style.transform = 'translate(-50%, -50%)';
+    
+    // Add Saturn's ring
+    if (p.class === 'saturn'){
+      const ring = document.createElement('div');
+      ring.className = 'saturn-ring';
+      planet.appendChild(ring);
+    }
+    
+    container.appendChild(planet);
+  });
+}
+
+createPlanets();
+</script>
+
+<script>
+(function(){
+ const held={up:false,down:false,left:false,right:false};
+ function init(){
+  const pad=document.getElementById('dpad'), cvs=document.getElementById('game-canvas');
+  if(!pad||!cvs)return;
+  pad.querySelectorAll('[data-dir]').forEach(b=>{
+   const d=b.dataset.dir;
+   const on=e=>{e.preventDefault();held[d]=true};
+   const off=e=>{e.preventDefault();held[d]=false};
+   b.addEventListener('pointerdown',on,{passive:false});
+   ['pointerup','pointercancel','pointerleave'].forEach(t=>b.addEventListener(t,off,{passive:false}));
+  });
+  let last=performance.now();
+  function loop(now){
+   let dt=Math.min(2,(now-last)/16.67);last=now;
+   if(typeof player!=='undefined'&&typeof isWorldActive!=='undefined'&&isWorldActive){
+    let dx=(held.right?1:0)-(held.left?1:0),dy=(held.down?1:0)-(held.up?1:0);
+    if(dx&&dy){dx*=.7071;dy*=.7071}
+    if(dx||dy){let v=5*dt;player.x=Math.max(player.r,Math.min(cvs.width-player.r,player.x+dx*v));player.y=Math.max(player.r,Math.min(cvs.height-player.r,player.y+dy*v));}
+   }
+   requestAnimationFrame(loop);
+  } requestAnimationFrame(loop);
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script></body>
+</html>
